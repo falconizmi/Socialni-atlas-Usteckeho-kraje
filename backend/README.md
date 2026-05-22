@@ -1,0 +1,1 @@
+nezaměstnanost - https://data.mpsv.cz/portal/api/reports/by-table/evid_pno_up_agr_frz_odata/data/json
