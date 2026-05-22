@@ -54,3 +54,38 @@ coverage.xml
 # (Optional) If you generate file uploads or temporary caches locally
 uploaded_files/
 .streamlit_cache/
+
+
+# ==========================================
+# React & Node.js Frontend
+# ==========================================
+
+# Dependencies
+node_modules/
+/.pnp
+.pnp.js
+
+# Production builds
+/build
+/dist
+
+# Environment variables
+# (It's standard practice to ignore local .env files in React)
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# Logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Testing
+/coverage
+
+# Next.js / Gatsby / Vite caches (if you end up using a framework)
+.next/
+.cache/
+.vite/
+
