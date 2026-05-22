@@ -12,6 +12,9 @@ venv/
 .venv/
 env/
 .env/
+backend/fapienv/
+
+backend/__pycache__/
 
 # Distribution / packaging
 build/
