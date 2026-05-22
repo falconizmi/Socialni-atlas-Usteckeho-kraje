@@ -1,0 +1,56 @@
+# ==========================================
+# Python & Virtual Environment
+# ==========================================
+
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Virtual Environments
+venv/
+.venv/
+env/
+.env/
+
+# Distribution / packaging
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# Testing / Profiling / Tooling
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+coverage.xml
+*.cover
+*.log
+
+# IDEs / Editors
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# ==========================================
+# Streamlit
+# ==========================================
+
+# Ignore Streamlit secrets (NEVER commit your API keys!)
+.streamlit/secrets.toml
+
+# (Optional) If you generate file uploads or temporary caches locally
+uploaded_files/
+.streamlit_cache/
