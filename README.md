@@ -4,7 +4,7 @@ emoji: 📊
 colorFrom: blue
 colorTo: green
 sdk: streamlit
-app_file: app.py
+app_file: social_atlas/app.py
 pinned: false
 ---
 
