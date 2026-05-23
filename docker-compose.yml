@@ -1,0 +1,28 @@
+version: '3.8'
+
+services:
+  backend:
+    build: ./backend
+    ports:
+      - "8000:8000"
+    # We pass the --reload flag here so it hot-reloads on your laptop, 
+    # but the actual Dockerfile stays clean for production!
+    command: uvicorn main:app --host 0.0.0.0 --port 8000 --reload
+
+  frontend:
+    # Since we don't have a frontend Dockerfile yet, we will just run 
+    # a clean Python container, install requirements, and run Streamlit.
+    image: python:3.11-slim
+    working_dir: /app
+    volumes:
+      - ./social_atlas:/app
+    ports:
+      - "8501:8501"
+    depends_on:
+      - backend
+    environment:
+      # This is how Streamlit knows where to find the backend locally
+      - API_URL=http://backend:8000 
+    command: >
+      bash -c "pip install --no-cache-dir -r requirements.txt && 
+      streamlit run app.py --server.address=0.0.0.0"
