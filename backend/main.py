@@ -1,9 +1,10 @@
 # main.py
 from fastapi import FastAPI
-import requests
+import subprocess
 import pandas as pd
 import os
 import json
+
 # Načteme prázdnou paměť a soubor s routou pro nezaměstnanost
 from store import data_cache
 import nezamestnanost 
@@ -39,24 +40,35 @@ def load_data_on_startup():
                 with open(file_path, "r", encoding="utf-8") as f:
                     raw_data = json.load(f)
             except Exception as e:
-                print(f"Poškozený lokální soubor '{file_path}', zkusím stáhnout nový. Chyba: {e}")
+                print(f"Poškozený lokální soubor '{file_path}'. Chyba: {e}")
+                raw_data = None
 
-        # 2. POKUS (FALLBACK): Pokud soubor neexistuje nebo byl poškozený, stáhneme data z API
+        # 2. POKUS (FALLBACK): Stažení a filtrace přes terminál (Ochrana proti OOM Erroru)
         if raw_data is None:
+            print(f"Lokální soubor nenalezen. Stahuji a rovnou filtruji z URL: {url}")
+            
+            # Trik s jq: Očekáváme formát {"value": [...]}. JQ to rozbalí, vyfiltruje jen Ústecký kraj a zase zabalí.
+            # Rourou (>) to rovnou uložíme do souboru, aniž by to prošlo přes paměť Pythonu.
+            jq_filter = '{value: [.value[]? | select(.kraj == "Ústecký kraj" or .kraj == "Ústecký")]}'
+            cmd = f"curl -s '{url}' | jq '{jq_filter}' > {file_path}"
+            
             try:
-                print(f"Lokální soubor pro '{name}' nenalezen. Stahuji z URL: {url}")
-                response = requests.get(url)
-                response.raise_for_status()
-                raw_data = response.json()
+                # Spuštění systémového příkazu
+                result = subprocess.run(cmd, shell=True, capture_output=True, text=True)
                 
-                # BONUS: Stažený JSON rovnou uložíme lokálně, aby se příště načetl bleskově ze disku
-                with open(file_path, "w", encoding="utf-8") as f:
-                    json.dump(raw_data, f, ensure_ascii=False, indent=4)
-                print(f"Stažená data úspěšně uložena do lokálního souboru '{file_path}'")
+                if result.returncode != 0:
+                    print(f"CRITICAL ERROR (curl/jq): {result.stderr}")
+                    continue
                 
+                print(f"Data úspěšně stažena, vyfiltrována a uložena do '{file_path}'")
+                
+                # Nyní můžeme bezpečně načíst ten už malý a vyfiltrovaný soubor
+                with open(file_path, "r", encoding="utf-8") as f:
+                    raw_data = json.load(f)
+                    
             except Exception as e:
-                print(f"CRITICAL ERROR: Nepodařilo se načíst lokální soubor ani stáhnout data z URL pro '{name}': {e}")
-                continue # Přeskočíme na další dataset, pokud jich je víc
+                print(f"CRITICAL ERROR při stahování a filtrování dat pro '{name}': {e}")
+                continue # Přeskočíme na další dataset
         
         # 3. ZPRACOVÁNÍ DAT: Rozbalení MPSV struktury ("value") a uložení do cache
         try:
