@@ -6,7 +6,7 @@ import folium
 from streamlit_folium import st_folium
 import plotly.express as px
 
-API_BASE_URL = os.getenv("API_URL", "http://localhost:8000")
+API_BASE_URL = "https://socialni-atlas-usteckeho-kraje.onrender.com"
 
 # ── 1. NAČTENÍ DAT ────────────────────────────────────────────────────────────
 @st.cache_data
