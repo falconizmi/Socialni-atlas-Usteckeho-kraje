@@ -14,7 +14,7 @@ app.include_router(nezamestnanost.router)
 
 # 2. Zde si definujete všechny URL adresy, které se mají stáhnout při startu
 DATA_SOURCES = {
-    "nezamestnanost": "https://data.mpsv.cz/portal/api/reports/by-table/evid_pno_up_agr_frz_odata_vp/data/json",
+    "nezamestnanost": "https://data.mpsv.cz/portal/api/reports/by-table/evid_evidence_stat_2_agr_frz_odata/data/json",
     # sem si kolega přidá další:
     # "exekuce": "https://url-na-data-o-exekucich.cz",
 }
