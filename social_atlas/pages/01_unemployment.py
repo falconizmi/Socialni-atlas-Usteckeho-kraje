@@ -14,11 +14,12 @@ def load_real_data():
     try:
         response = requests.get(f"{API_BASE_URL}/nezamestnanost")
         response.raise_for_status()
+        # Originální backend posílá přímo list, takže stačí rovnou pd.DataFrame
         return pd.DataFrame(response.json())
     except requests.exceptions.RequestException as e:
         st.error(f"Nepodařilo se připojit k backendu: {e}")
         return pd.DataFrame()
-
+    
 df = load_real_data()
 
 if df.empty:
@@ -225,4 +226,68 @@ if 'education' in df.columns:
 # ── 9. DATOVÁ TABULKA ─────────────────────────────────────────────────────────
 st.markdown("---")
 st.subheader("Surová data pro export")
-st.dataframe(df, use_container_width=True, hide_index=True)
+
+# 1. Filtrační komponenta podle okresu
+c_filter1, _ = st.columns([2, 2])
+with c_filter1:
+    # Získáme unikátní okresy z hlavního DataFrame a přidáme možnost "Všechny"
+    orp_options = ["Všechny"] + sorted(list(df['orp'].unique()))
+    selected_orp = st.selectbox("Filtrovat podle okresu:", orp_options)
+
+# Aplikace filtru na data pro tabulku
+if selected_orp != "Všechny":
+    filtered_df = df[df['orp'] == selected_orp]
+else:
+    filtered_df = df
+
+# 2. Správa stavu stránkování v st.session_state
+if "table_page" not in st.session_state:
+    st.session_state.table_page = 1
+
+# Pokud uživatel změní filtr okresu, vrátíme ho na 1. stránku
+if "last_selected_orp" not in st.session_state:
+    st.session_state.last_selected_orp = selected_orp
+elif st.session_state.last_selected_orp != selected_orp:
+    st.session_state.table_page = 1
+    st.session_state.last_selected_orp = selected_orp
+
+# 3. Výpočet stránkování
+PAGE_SIZE = 15  # Kolik řádků chceme vidět na jedné stránce
+total_records = len(filtered_df)
+
+# Spočítáme celkový počet stránek (celočíselné dělení s horním zaokrouhlením)
+total_pages = (total_records + PAGE_SIZE - 1) // PAGE_SIZE if total_records > 0 else 1
+
+# Pojistka: pokud by se kvůli filtru snížil počet stránek pod aktuální stránku
+if st.session_state.table_page > total_pages:
+    st.session_state.table_page = total_pages
+
+# Výpočet indexů pro oříznutí (slice) tabulky
+start_idx = (st.session_state.table_page - 1) * PAGE_SIZE
+end_idx = start_idx + PAGE_SIZE
+
+# Ořízneme DataFrame pouze na řádky pro aktuální stránku
+paginated_df = filtered_df.iloc[start_idx:end_idx]
+
+# 4. Zobrazení tabulky
+if not paginated_df.empty:
+    st.dataframe(paginated_df, use_container_width=True, hide_index=True)
+else:
+    st.info("Pro tento výběr nejsou k dispozici žádná data.")
+
+# 5. Ovládací prvky stránkování (Tlačítka a info)
+st.markdown(f"**Stránka {st.session_state.table_page} z {total_pages}** (Zobrazeno {len(paginated_df)} z {total_records} nalezených záznamů)")
+
+c_nav1, c_nav2, _ = st.columns([1, 1, 4])
+
+with c_nav1:
+    # Tlačítko Předchozí (vypnuté na 1. stránce)
+    if st.button("⬅️ Předchozí", disabled=(st.session_state.table_page <= 1)):
+        st.session_state.table_page -= 1
+        st.rerun()
+
+with c_nav2:
+    # Tlačítko Další (vypnuté na poslední stránce)
+    if st.button("Další ➡️", disabled=(st.session_state.table_page >= total_pages)):
+        st.session_state.table_page += 1
+        st.rerun()
