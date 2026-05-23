@@ -214,7 +214,7 @@ fig_gender = px.bar(
 )
 
 # 6. Nastavení pozice textu a layoutu
-fig_gender.update_traces(textposition='outside') # Umístí čísla hned za sloupce
+fig_gender.update_traces(textposition='outside', textfont_size = 14) # Umístí čísla hned za sloupce
 
 fig_gender.update_layout(
     xaxis=dict(
