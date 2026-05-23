@@ -240,11 +240,45 @@ st.markdown("---")
 st.subheader(f"Struktura nezaměstnaných podle vzdělání ({selected_year})")
 
 if 'education' in df.columns:
+    # 1. Agregace dat pro vybraný rok
     df_edu = df[df['year'] == selected_year].groupby('education')['value'].sum().reset_index()
+
+    # 2. Vypočítáme procenta pro filtraci
+    total = df_edu['value'].sum()
+    df_edu['percent'] = (df_edu['value'] / total) * 100
+
+    # 3. Rozdělení na "Velké" kategorie (>= 4%) a "Malé" (< 4%)
+    df_main = df_edu[df_edu['percent'] >= 4].copy()
+    other_value = df_edu[df_edu['percent'] < 4]['value'].sum()
+
+    # Pokud máme nějaké malé hodnoty, vytvoříme z nich nový řádek "Ostatní"
+    if other_value > 0:
+        df_other = pd.DataFrame([{'education': 'Ostatní', 'value': other_value}])
+        # Spojíme hlavní kategorie s "Ostatní"
+        df_final = pd.concat([df_main, df_other], ignore_index=True)
+    else:
+        df_final = df_main
+
+    # 4. Vykreslení grafu (odstraněn parametr 'hole' pro plný koláč)
     fig_edu = px.pie(
-        df_edu, values='value', names='education', hole=0.4,
+        df_final, 
+        values='value', 
+        names='education',
         color_discrete_sequence=px.colors.qualitative.Pastel
     )
+
+    # 5. Úprava popisků (čáry vedoucí ven z grafu) a skrytí legendy
+    fig_edu.update_traces(
+        textinfo='label+percent', # Zobrazí název i procento
+        textposition='outside',   # Vytáhne text ven na vodících čarách
+        pull=[0.05 if edu == 'Ostatní' else 0 for edu in df_final['education']] # Vizuální detail: lehce "vysune" kousek Ostatní
+    )
+
+    fig_edu.update_layout(
+        showlegend=False, # Zruší boční legendu
+        margin=dict(t=30, b=30, l=100, r=100) # Přidá okraje, aby se dlouhé texty venku neusekly
+    )
+
     st.plotly_chart(fig_edu, use_container_width=True)
 
 
