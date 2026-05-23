@@ -15,4 +15,4 @@ jobs:
       - name: Push to hub
         env:
           HF_TOKEN: ${{ secrets.HF_TOKEN }}
-        run: git push https://falconizmi:$HF_TOKEN@huggingface.co/spaces/falconizmi/Socialni-atlas-Usteckeho-kraje main
+        run: git push --force https://falconizmi:$HF_TOKEN@huggingface.co/spaces/falconizmi/Socialni-atlas-Usteckeho-kraje main
