@@ -189,24 +189,49 @@ st.plotly_chart(fig_heat, use_container_width=True)
 st.markdown("---")
 st.subheader(f"Nezaměstnanost podle pohlaví ({selected_year})")
 
+# 1. Agregace dat
 df_pyramid = df[df['year'] == selected_year].groupby(['orp', 'gender'])['value'].sum().reset_index()
-# Trik: Muže dáme do mínusu, aby šli doleva
-df_pyramid.loc[df_pyramid['gender'] == 'M', 'value'] *= -1
 
+df_pyramid['gender'] = df_pyramid['gender'].replace({'M': 'Muži', 'Ž': 'Ženy'})
+
+# Pokud máš desetinná čísla, můžeš přidat .round(1)
+df_pyramid['display_value'] = df_pyramid['value'].abs()
+
+# 4. Trik: Muže dáme do mínusu, aby šli doleva
+df_pyramid.loc[df_pyramid['gender'] == 'Muži', 'value'] *= -1
+
+# 5. Vykreslení grafu s parametrem text='display_value'
 fig_gender = px.bar(
-    df_pyramid, x='value', y='orp', color='gender', orientation='h', barmode='relative',
-    color_discrete_map={'M': '#1f77b4', 'Ž': '#d62728'},
+    df_pyramid, 
+    x='value', 
+    y='orp', 
+    color='gender', 
+    orientation='h', 
+    barmode='relative',
+    text='display_value', # Vloží hodnoty na konec sloupců
+    color_discrete_map={'Muži': '#1f77b4', 'Ženy': '#d62728'},
     labels={'value': 'Počet lidí', 'orp': 'Okres', 'gender': 'Pohlaví'}
 )
 
-# Vizuální úprava osy X (aby neukazovala mínusová čísla)
+# 6. Nastavení pozice textu a layoutu
+fig_gender.update_traces(textposition='outside') # Umístí čísla hned za sloupce
+
 fig_gender.update_layout(
     xaxis=dict(
-        tickvals=[-10000, -8000, -6000, -4000, -2000, 0, 2000, 4000, 6000, 8000, 10000],
-        ticktext=["10k", "8k", "6k", "4k", "2k", "0", "2k", "4k", "6k", "8k", "10k"]
+        visible=False # Úplně skryje osu X i s čarami a popisy
     ),
-    yaxis_title=None
+    yaxis_title=None,
+    legend=dict(
+        orientation="h",       # Horizontální výpis
+        yanchor="top",
+        y=-0.1,                # Posune legendu pod graf
+        xanchor="center",
+        x=0.5,                 # Vystředí legendu
+        title=None             # Skryje nadpis "Pohlaví", u Muži/Ženy je to jasné
+    ),
+    margin=dict(l=0, r=40, t=20, b=0) # Přidá trochu místa napravo (r=40), aby se oříznutá čísla u žen vešla
 )
+
 st.plotly_chart(fig_gender, use_container_width=True)
 
 
