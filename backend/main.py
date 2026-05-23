@@ -3,20 +3,21 @@ from fastapi import FastAPI
 import requests
 import pandas as pd
 
-# Načteme prázdnou paměť a soubor s routou pro nezaměstnanost
+# Načteme prázdnou paměť a soubory s routami pro jednotlivé datové sady
 from store import data_cache
-import nezamestnanost 
+import nezamestnanost
+import exekuce
 
 app = FastAPI()
 
-# 1. Tímto propojíme endpoint z nezamestnanost.py s hlavní aplikací
+# 1. Tímto propojíme endpointy z modulů s hlavní aplikací
 app.include_router(nezamestnanost.router)
+app.include_router(exekuce.router)
 
 # 2. Zde si definujete všechny URL adresy, které se mají stáhnout při startu
 DATA_SOURCES = {
     "nezamestnanost": "https://data.mpsv.cz/portal/api/reports/by-table/evid_evidence_stat_2_agr_frz_odata/data/json",
-    # sem si kolega přidá další:
-    # "exekuce": "https://url-na-data-o-exekucich.cz",
+    "exekuce_obce": "https://statistiky.ekcr.info/otevrena-data/data/obce.json",
 }
 
 @app.on_event("startup")
