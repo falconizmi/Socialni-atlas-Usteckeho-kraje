@@ -216,20 +216,27 @@ fig_gender = px.bar(
 # 6. Nastavení pozice textu a layoutu
 fig_gender.update_traces(textposition='outside', textfont_size = 14) # Umístí čísla hned za sloupce
 
+# --- NOVÁ ČÁST: Dynamický výpočet šířky osy ---
+# Najdeme nejvyšší hodnotu a přidáme 20 % jako rezervu (padding) pro text
+max_val = df_pyramid['display_value'].max()
+padding = max_val * 1.2 
+
 fig_gender.update_layout(
     xaxis=dict(
-        visible=False # Úplně skryje osu X i s čarami a popisy
+        visible=False,
+        range=[-padding, padding] # Vynutí, aby osa X byla dostatečně široká na obě strany
     ),
     yaxis_title=None,
     legend=dict(
-        orientation="h",       # Horizontální výpis
+        orientation="h",
         yanchor="top",
-        y=-0.1,                # Posune legendu pod graf
+        y=-0.1,
         xanchor="center",
-        x=0.5,                 # Vystředí legendu
-        title=None             # Skryje nadpis "Pohlaví", u Muži/Ženy je to jasné
+        x=0.5,
+        title=None
     ),
-    margin=dict(l=0, r=40, t=20, b=0) # Přidá trochu místa napravo (r=40), aby se oříznutá čísla u žen vešla
+    # Zvětšili jsme l=100 (místo pro názvy jako Ústí nad Labem) a r=80 (místo pro čísla vpravo)
+    margin=dict(l=100, r=80, t=20, b=0) 
 )
 
 st.plotly_chart(fig_gender, use_container_width=True)
@@ -337,16 +344,17 @@ else:
 # 5. Ovládací prvky stránkování (Tlačítka a info)
 st.markdown(f"**Stránka {st.session_state.table_page} z {total_pages}** (Zobrazeno {len(paginated_df)} z {total_records} nalezených záznamů)")
 
-c_nav1, c_nav2, _ = st.columns([1, 1, 4])
+# Zvětšili jsme prostor pro obě tlačítka (z 1 na 2.5), aby se vešla vedle sebe
+c_nav1, c_nav2, _ = st.columns([2.5, 2.5, 7])
 
 with c_nav1:
     # Tlačítko Předchozí (vypnuté na 1. stránce)
-    if st.button("⬅️ Předchozí", disabled=(st.session_state.table_page <= 1)):
+    if st.button("⬅️ Předchozí", disabled=(st.session_state.table_page <= 1), use_container_width=True):
         st.session_state.table_page -= 1
         st.rerun()
 
 with c_nav2:
     # Tlačítko Další (vypnuté na poslední stránce)
-    if st.button("Další ➡️", disabled=(st.session_state.table_page >= total_pages)):
+    if st.button("Další ➡️", disabled=(st.session_state.table_page >= total_pages), use_container_width=True):
         st.session_state.table_page += 1
         st.rerun()

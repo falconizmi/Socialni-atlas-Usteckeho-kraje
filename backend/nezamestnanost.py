@@ -1,5 +1,5 @@
 # nezamestnanost.py
-from fastapi import APIRouter
+from fastapi import APIRouter, Request
 import pandas as pd
 from store import data_cache
 
@@ -33,7 +33,7 @@ def get_metadata():
     return NEZAMESTNANOST_METADATA
 
 @router.get("/nezamestnanost")
-def get_nezamestnanost():
+def get_nezamestnanost(request: Request):
     if "nezamestnanost" not in data_cache:
         print("DEBUG: Data not in cache")
         return {"error": "Data is loading..."}
