@@ -37,32 +37,27 @@ def load_data_on_startup():
 def get_nezamestnanost():
     # Check if data actually loaded
     if "nezamestnanost" not in data_cache:
-        return {"error": "Data is still loading or failed to load."}
+        return {"error": "Data is loading..."}
         
-    df = data_cache["nezamestnanost"]
-
-    # --- FILTERING ---
-    # Ensure the column is actually called 'kraj' in the raw JSON! 
-    # If MPSV calls it something else like 'vusc_nazev', change it here.
+    df = data_cache["nezamestnanost"].copy()
+    
     if "kraj" in df.columns:
         df = df[df["kraj"] == "Ústecký kraj"]
 
-    # --- THE DATA BRIDGE (SCHEMA MAPPING) ---
-    # Your frontend mock_data.py expects exactly 3 columns: "year", "orp", "value"
-    # The raw MPSV data almost certainly uses different Czech column names.
-    # 
-    # UNCOMMENT AND EDIT THIS ONCE YOU KNOW THE REAL MPSV COLUMN NAMES:
-    #
-    # df = df.rename(columns={
-    #     "rok": "year",                 # Replace 'rok' with real column
-    #     "nazev_orp": "orp",            # Replace 'nazev_orp' with real column
-    #     "podil_nezamestnanych": "value" # Replace with real metric column
-    # })
-    #
-    # Keep only the columns the frontend expects to save bandwidth
-    # df = df[["year", "orp", "value"]] 
+    df["year"] = pd.to_datetime(df["rozhodne_datum"]).dt.year
+    df = df.rename(columns={"okres": "orp", "uchazec_pohlavi": "gender"})
+    
+    grouped = df.groupby(["year", "orp", "gender"]).agg(
+        total_uchazeci=("pocet_uchazeci_dosazitelni", "sum"),
+        total_obyvatel=("pocet_obyvatel_vek_15_64", "sum")
+    ).reset_index()
+    
+    grouped["value"] = (grouped["total_uchazeci"] / grouped["total_obyvatel"]) * 100
+    grouped["value"] = grouped["value"].round(2)
 
-    return df.to_dict(orient="records")
+    final_df = grouped[["year", "orp", "gender", "value"]] 
+
+    return final_df.to_dict(orient="records")
 
 # TEMPLATE for others
 """
