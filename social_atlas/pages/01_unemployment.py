@@ -51,7 +51,14 @@ selected_year = st.selectbox("Vyberte rok pro analýzu:", available_years)
 st.markdown("### Klíčové ukazatele")
 c1, c2, c3, c4 = st.columns(4)
 
-df_total = df.groupby(['year', 'orp'])['value'].sum().reset_index()
+df_total = df.groupby(['year', 'orp']).agg({
+    'value': 'sum',
+    'inflow': 'sum',
+    'outflow': 'sum',
+    'avg_age': 'mean', # Zjednodušeno pro zobrazení v kartě
+    'avg_duration': 'mean'
+}).reset_index()
+
 df_current = df_total[df_total['year'] == selected_year]
 df_previous = df_total[df_total['year'] == (selected_year - 1)]
 
@@ -65,11 +72,16 @@ with c1:
         st.metric("Lidé bez práce (Kraj)", f"{current_total:,}".replace(',', ' '))
 
 with c2:
-    st.metric("Počet exekucí", "Data se připravují", delta_color="off")
+    current_inflow = int(df_current['inflow'].sum())
+    st.metric("Nově v evidenci", f"{current_inflow:,}".replace(',', ' '))
+
 with c3:
-    st.metric("Příspěvky na bydlení", "Data se připravují", delta_color="off")
+    avg_age = df_current['avg_age'].mean()
+    st.metric("Průměrný věk", f"{avg_age:.1f} let")
+
 with c4:
-    st.metric("Kriminalita (‰)", "Data se připravují", delta_color="off")
+    avg_duration = df_current['avg_duration'].mean()
+    st.metric("Průměrná délka evidence", f"{int(avg_duration)} dní")
 
 
 # ── 5. MAPA (Světlý moderní podklad + Detailní Hover Tooltip) ─────────────────
@@ -104,10 +116,13 @@ for _, row in df_current.iterrows():
         rgba_bg = f"rgba({r}, {g}, {b}, 0.9)"
         rgba_glow = f"rgba({r}, {g}, {b}, 0.4)"
         
-        # 1. Získání dodatečných dat pro daný okres a rok (Muži vs Ženy)
+        # 1. Získání dodatečných dat pro daný okres a rok
         detail_df = df[(df['year'] == selected_year) & (df['orp'] == orp_name)]
         muzi = detail_df[detail_df['gender'] == 'M']['value'].sum()
         zeny = detail_df[detail_df['gender'] == 'Ž']['value'].sum()
+        
+        inflow = detail_df['inflow'].sum()
+        outflow = detail_df['outflow'].sum()
         
         # 2. Vytvoření HTML pro Hover (Tooltip) s dodatečnými informacemi
         hover_html = f"""
@@ -116,7 +131,10 @@ for _, row in df_current.iterrows():
             Celkem nezaměstnaných: <b>{int(val):,}</b><br>
             <hr style="margin: 4px 0; border: 0; border-top: 1px solid #ccc;">
             Muži: {int(muzi):,}<br>
-            Ženy: {int(zeny):,}
+            Ženy: {int(zeny):,}<br>
+            <hr style="margin: 4px 0; border: 0; border-top: 1px solid #ccc;">
+            Nástup do evidence: {int(inflow):,}<br>
+            Ukončení evidence: {int(outflow):,}
         </div>
         """
         
